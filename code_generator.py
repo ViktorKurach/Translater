@@ -9,8 +9,12 @@ class CodeGenerator:
         self.token_list = []
         self.error_list = []
         self.labels = {}
-        self.code_gen_identifiers = []
+        self.parameters = []
+        self.identifiers = []
         self.identifiers_table = self.parser.lex.identifiers
+        self.constants_table = self.parser.lex.constants
+        self.keywords_table = self.parser.lex.keywords
+        self.two_char_separators_table = self.parser.lex.two_char_separators
         self.proc_id = ""
         self.var_id = ""
         self.asm_file_name = ""
@@ -40,8 +44,6 @@ class CodeGenerator:
         pop ebp \n ret \n PROCID endp \n start: \n mov ax, 0 \n [2] mov ax,
         4c00h \n int 21h \n code ends \n end start \n}
         """
-        print("Program:\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n" %
-              (tree[0], tree[1], tree[2], tree[3], tree[4], tree[5], tree[6], tree[7], tree[8]))
         print("code segment\nassume cs:code\n", file=self.code_file)
         if self.code_gen_procedure_id(tree[2]) != 0:
             return 1
@@ -61,8 +63,6 @@ class CodeGenerator:
         <BLOCK> -> <DECLARATIONS> BEGIN <STATEMENTS-LIST> END
         {[2][1]}
         """
-        print("Block:\n%s\n%s\n%s\n%s\n%s\n%s\n" %
-              (tree[0], tree[1], tree[2], tree[3], tree[4], tree[5]))
         if self.code_gen_declarations(tree[1]) != 0:
             return 1
         return self.code_gen_stmt_list(tree[4])
@@ -72,7 +72,6 @@ class CodeGenerator:
         <DECLARATIONS> -> <LABEL-DECLARATIONS>
         {[1]}
         """
-        print("Declarations:\n%s\n%s\n" % (tree[0], tree[1]))
         return self.code_gen_label_declarations(tree[1])
 
     def code_gen_label_declarations(self, tree):
@@ -82,11 +81,8 @@ class CodeGenerator:
             <EMPTY>
         {[2][1]} | {}
         """
-        print("Label declarations:")
         if tree[0] == "<EMPTY>":
-            print("%s\n" % tree[0])
             return 0
-        print("%s\n%s\n%s\n%s\n%s\n%s\n" % (tree[0], tree[1], tree[2], tree[3], tree[4], tree[5]))
         self.code_gen_unsigned(tree[2])
         self.labels[self.unsigned] = False
         return self.code_gen_labels_list(tree[4])
@@ -98,11 +94,8 @@ class CodeGenerator:
             <EMPTY>
         {[2][1]} | {}
         """
-        print("Labels list:")
         if tree[0] == "<EMPTY>":
-            print("%s\n" % tree[0])
             return 0
-        print("%s\n%s\n%s\n%s\n%s\n" % (tree[0], tree[1], tree[2], tree[3], tree[4]))
         self.code_gen_unsigned(tree[2])
         if self.unsigned in self.labels.keys():
             return self.process_error(17)
@@ -116,11 +109,8 @@ class CodeGenerator:
             <EMPTY>
         {[2] push ax \n [1]} | {}
         """
-        print("Parameters list:")
         if tree[0] == "<EMPTY>":
-            print("%s\n" % tree[0])
             return 0
-        print("%s\n%s\n%s\n%s\n%s\n%s\n" % (tree[0], tree[1], tree[2], tree[3], tree[4], tree[5]))
         self.code_gen_variable_id(tree[2])
         print("push ax", file=self.code_file)
         return self.code_gen_id_list(tree[4])
@@ -132,13 +122,10 @@ class CodeGenerator:
             <EMPTY>
         {[2] push ax \n [1]} | {}
         """
-        print("Identifiers list:")
         if tree[0] == "<EMPTY>":
-            print("%s\n" % tree[0])
             return 0
-        print("%s\n%s\n%s\n%s\n%s\n" % (tree[0], tree[1], tree[2], tree[3], tree[4]))
         if self.code_gen_variable_id(tree[2]) != 0:
-            return self.process_error(18)
+            return 1
         print("push ax", file=self.code_file)
         return self.code_gen_id_list(tree[4])
 
@@ -149,18 +136,15 @@ class CodeGenerator:
             <EMPTY>
         {[2][1]} | {}
         """
-        print("Statements list:")
         if tree[0] == "<EMPTY>":
-            print("%s\n" % tree[0])
             return 0
-        print("%s\n%s\n%s\n%s\n" % (tree[0], tree[1], tree[2], tree[3]))
         stmt_res = self.code_gen_statement(tree[1])
         if type(stmt_res) == int and stmt_res != 0:
             return 1
         if self.code_gen_stmt_list(tree[3]) != 0:
             return 1
         if type(stmt_res) == str and not self.labels[stmt_res]:
-            return self.process_error(19)
+            return self.process_error(19, stmt_res)
         return 0
 
     def code_gen_statement(self, tree):
@@ -174,31 +158,22 @@ class CodeGenerator:
         {[2] @UNSIGNED: \n [1]} | {[1] jmp @UNSIGNED \n} |
         {pop ebp \n ret \n} | {} | {[1]ASM-CODE-FROM-FILE}
         """
-        print("Statement:")
         if tree[0] == 59:
-            print("%s\n" % tree[0])
             return 0
         elif tree[0] == 405:
-            print("%s\n%s\n%s\n%s\n" % (tree[0], tree[1], tree[2], tree[3]))
             self.code_gen_unsigned(tree[2])
             if self.unsigned not in self.labels.keys():
-                return self.process_error(18)
+                return self.process_error(22)
             print("jmp @%s" % self.unsigned, file=self.code_file)
             return self.unsigned
         elif tree[0] == 406:
-            print("%s\n%s\n" % (tree[0], tree[1]))
             print("pop ebp\nret", file=self.code_file)
             return 0
         elif tree[0] == 301:
-            print("%s\n%s\n%s\n%s\n" % (tree[0], tree[1], tree[2], tree[3]))
             if self.code_gen_asm_file_id(tree[2]) != 0:
                 return 1
             try:
-                asm_file_real_name = ""
-                for key in self.identifiers_table.keys():
-                    if self.identifiers_table[key] == self.asm_file_name:
-                        asm_file_real_name = key
-                        break
+                asm_file_real_name = self.__get_identifier(self.asm_file_name)
                 asm = open(asm_file_real_name+".asm")
             except FileNotFoundError:
                 return self.process_error(20)
@@ -207,12 +182,12 @@ class CodeGenerator:
                 print(ch, file=self.code_file, end="")
                 ch = asm.read(1)
             asm.close()
+            print(file=self.code_file)
             return 0
         else:
-            print("%s\n%s\n%s\n%s\n%s\n" % (tree[0], tree[1], tree[2], tree[3], tree[4]))
             self.code_gen_unsigned(tree[1])
             if self.unsigned not in self.labels.keys():
-                return self.process_error(18)
+                return self.process_error(22)
             print("@%s:" % self.unsigned, file=self.code_file)
             self.labels[self.unsigned] = True
             return self.code_gen_statement(tree[4])
@@ -222,7 +197,6 @@ class CodeGenerator:
         <VARIABLE-IDENTIFIER> -> <IDENTIFIER>
         {[1]}
         """
-        print("Variable id:\n%s\n%s\n" % (tree[0], tree[1]))
         if self.code_gen_identifier(tree[1]) != 0:
             return 1
         self.var_id = self.id
@@ -233,7 +207,6 @@ class CodeGenerator:
         <PROCEDURE-IDENTIFIER> -> <IDENTIFIER>
         {[1]}
         """
-        print("Procedure id:\n%s\n%s\n" % (tree[0], tree[1]))
         if self.code_gen_identifier(tree[1]) != 0:
             return 1
         self.proc_id = self.id
@@ -244,28 +217,181 @@ class CodeGenerator:
         <ASSEMBLY-INSERT-FILE-IDENTIFIER> -> <IDENTIFIER>
         {[1]}
         """
-        print("Asm insert file id:\n%s\n%s\n" % (tree[0], tree[1]))
         if self.code_gen_identifier(tree[1]) != 0:
             return 1
         self.asm_file_name = self.id
         return 0
 
     def code_gen_identifier(self, tree):
-        print("Identifier: %s\n" % tree)
-        if tree[0] in self.code_gen_identifiers:
-            return self.process_error(21)
         self.id = tree[0]
-        self.code_gen_identifiers.append(self.id)
+        if self.id in self.keywords_table.keys():
+            return self.process_error(22)
+        if self.id in self.parameters:
+            return self.process_error(18)
+        if self.id in self.identifiers:
+            return self.process_error(21)
+        self.identifiers.append(self.id)
         return 0
 
     def code_gen_unsigned(self, tree):
-        print("Unsigned: %s\n" % tree)
         self.unsigned = str(tree[0])
         return 0
 
-    def process_error(self, n):
-        self.error_list.append(n)
+    def process_error(self, n, label=None):
+        # Label declared twice
+        if n == 17:
+            self.error_list.append([n, self.__get_constant(self.unsigned)])
+        # Duplicated formal parameter
+        elif n == 18:
+            self.error_list.append([n, self.__get_identifier(self.id)])
+        # Reference to non-existing label
+        elif n == 19:
+            self.error_list.append([n, self.__get_constant(label)])
+        # Assembly file not found
+        elif n == 20:
+            self.error_list.append([n, self.__get_identifier(self.asm_file_name)])
+        # Re-used identifier
+        elif n == 21:
+            self.error_list.append([n, self.__get_identifier(self.id)])
+        # Reference to undeclared label
+        elif n == 22:
+            self.error_list.append([n, self.__get_constant(self.unsigned)])
         return 1
+
+    def __get_identifier(self, code):
+        res = ""
+        for key in self.identifiers_table.keys():
+            if self.identifiers_table[key] == int(code):
+                res = key
+                break
+        return res
+
+    def __get_constant(self, code):
+        res = ""
+        for key in self.constants_table.keys():
+            if self.constants_table[key] == int(code):
+                res = key
+                break
+        return res
+
+    def __get_two_char_separator(self, code):
+        res = ""
+        for key in self.two_char_separators_table.keys():
+            if self.two_char_separators_table[key] == int(code):
+                res = key
+                break
+        return res
+
+    def __get_keyword(self, code):
+        res = ""
+        for key in self.keywords_table.keys():
+            if self.keywords_table[key] == int(code):
+                res = key
+                break
+        return res
+
+    def listing(self, output):
+        line = 0
+        pos = 0
+        print("1.\t| ", file=output, end="")
+        for token in self.token_list:
+            if token[0] == "E1" and token[2] > line or token[0]\
+                    != "E1" and token[1] > line:
+                line += 1
+                pos = 0
+                print("\n%d.\t| " % (line + 1), file=output, end="")
+            if token[0] == "E1":
+                while pos < token[3]:
+                    pos += 1
+                    print(" ", file=output, end="")
+                print("%s" % token[1], file=output, end="")
+                pos += 1
+            else:
+                while pos < token[2]:
+                    pos += 1
+                    print(" ", file=output, end="")
+                if token[0] == "E2":
+                    break
+                elif token[0] in range(0, 256):
+                    print("%s" % chr(token[0]), file=output, end="")
+                    pos += 1
+                elif token[0] in range(301, 401):
+                    print("%s" % self.__get_two_char_separator(token[0]),
+                          file=output, end="")
+                    pos += 2
+                elif token[0] in range(401, 501):
+                    buf = self.__get_keyword(token[0])
+                    print("%s" % buf, file=output, end="")
+                    pos += len(buf)
+                elif token[0] in range(501, 1001):
+                    buf = self.__get_constant(token[0])
+                    print("%s" % buf, file=output, end="")
+                    pos += len(buf)
+                else:  # token[0] > 1000
+                    buf = self.__get_identifier(token[0])
+                    print("%s" % buf, file=output, end="")
+                    pos += len(buf)
+        if self.error_list:
+            print("\n\nError occurred:", file=output)
+            error_case = self.error_list[0]
+            if error_case[0] == 0:
+                print("\"PROCEDURE\" keyword expected (line %i, position %i)" %
+                      (error_case[1] + 1, error_case[2] + 1), file=output)
+            elif error_case[0] == 1:
+                print("Semicolon expected (line %i, position %i)" %
+                      (error_case[1] + 1, error_case[2] + 1), file=output)
+            elif error_case[0] == 2:
+                print("\"BEGIN\" keyword expected (line %i, position %i)" %
+                      (error_case[1] + 1, error_case[2] + 1), file=output)
+            elif error_case[0] == 3:
+                print("\"END\" keyword expected (line %i, position %i)" %
+                      (error_case[1] + 1, error_case[2] + 1), file=output)
+            elif error_case[0] == 4:
+                print("\"LABEL\" keyword expected (line %i, position %i)" %
+                      (error_case[1] + 1, error_case[2] + 1), file=output)
+            elif error_case[0] == 5:
+                print("Comma expected (line %i, position %i)" %
+                      (error_case[1] + 1, error_case[2] + 1), file=output)
+            elif error_case[0] == 6:
+                print("Opening parenthesis expected (line %i, position %i)" %
+                      (error_case[1] + 1, error_case[2] + 1), file=output)
+            elif error_case[0] == 7:
+                print("Closing parenthesis expected (line %i, position %i)" %
+                      (error_case[1] + 1, error_case[2] + 1), file=output)
+            elif error_case[0] == 8:
+                print("\"$)\" expected (line %i, position %i)" %
+                      (error_case[1] + 1, error_case[2] + 1), file=output)
+            elif error_case[0] == 9:
+                print("Colon expected (line %i, position %i)" %
+                      (error_case[1] + 1, error_case[2] + 1), file=output)
+            elif error_case[0] == 10:
+                print("Identifier expected (line %i, position %i)" %
+                      (error_case[1] + 1, error_case[2] + 1), file=output)
+            elif error_case[0] == 11:
+                print("Unsigned integer expected (line %i, position %i)" %
+                      (error_case[1] + 1, error_case[2] + 1), file=output)
+            elif error_case[0] == 12:
+                print("Unresolved character (line %i, position %i)" %
+                      (error_case[1] + 1, error_case[2] + 1), file=output)
+            elif error_case[0] == 13:
+                print("Unclosed comment (line %i, position %i)" %
+                      (error_case[1] + 1, error_case[2] + 1), file=output)
+            elif error_case[0] == 17:
+                print("Label %s is declared twice" % error_case[1], file=output)
+            elif error_case[0] == 18:
+                print("Formal parameter %s duplicates" % error_case[1],
+                      file=output)
+            elif error_case[0] == 19:
+                print("Reference to non-existing label %s" %
+                      error_case[1], file=output)
+            elif error_case[0] == 20:
+                print("Wrong assemble file name: %s" % error_case[1],
+                      file=output)
+            elif error_case[0] == 21:
+                print("Identifier %s is re-used" % error_case[1], file=output)
+            elif error_case[0] == 22:
+                print("Reference to undeclared label %s"
+                      % error_case[1], file=output)
 
 
 if __name__ == "__main__":
@@ -276,5 +402,10 @@ if __name__ == "__main__":
     code_gen = CodeGenerator()
     g = open(filename+".asm", "w")
     print(code_gen.code_gen(f, g))
+    if code_gen.error_list:
+        print(code_gen.error_list)
     f.close()
     g.close()
+    h = open(filename+".lst", "w")
+    code_gen.listing(h)
+    h.close()

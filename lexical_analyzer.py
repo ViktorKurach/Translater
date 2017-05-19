@@ -221,7 +221,7 @@ class Lexer:
             print("#%s: %s" % (table[x], x), file=output)
         print(file=output)
 
-    def listing(self, output=None, only_errors=True):
+    def listing(self, output=None):
         """
         Prints the result of lexical analysis: tables, errors and tokens'
         codes with their positions in source code file.
@@ -230,32 +230,30 @@ class Lexer:
         The parameter 'output' takes a file, which analysis results are
         printed into; if output=None, listing is printed on the screen.
         """
-        if not only_errors:
-            self.table_print(self.keywords, "Keywords", output)
-            self.table_print(self.two_char_separators, "Two-char separators",
-                             output)
-            self.table_print(self.identifiers, "Identifiers", output)
-            self.table_print(self.constants, "Constants", output)
-            print("Lexical analysis:")
+        self.table_print(self.keywords, "Keywords", output)
+        self.table_print(self.two_char_separators, "Two-char separators",
+                         output)
+        self.table_print(self.identifiers, "Identifiers", output)
+        self.table_print(self.constants, "Constants", output)
         for x in self.token_list:
             if x[0] == 'E1':
                 print("%s (line %i, position %i)"
                       % (x[1], x[2]+1, x[3]+1), file=output)
             elif x[0] == 'E2':
                 pass
-            elif x[0] in range(0, 256) and not only_errors:
+            elif x[0] in range(0, 256):
                 print("%s (line %i, position %i)"
                       % (chr(x[0]), x[1]+1, x[2]+1), file=output)
-            elif x[0] in range(301, 401) and not only_errors:
+            elif x[0] in range(301, 401):
                 print("#%s (line %i, position %i)"
                       % (x[0], x[1] + 1, x[2] + 1), file=output)
-            elif x[0] in range(401, 501) and not only_errors:
+            elif x[0] in range(401, 501):
                 print("#%s (line %i, position %i)"
                       % (x[0], x[1] + 1, x[2] + 1), file=output)
-            elif x[0] in range(501, 1001) and not only_errors:
+            elif x[0] in range(501, 1001):
                 print("#%s (line %i, position %i)"
                       % (x[0], x[1] + 1, x[2] + 1), file=output)
-            elif x[0] >= 1001 and not only_errors:
+            elif x[0] >= 1001:
                 print("#%s (line %i, position %i)"
                       % (x[0], x[1] + 1, x[2] + 1), file=output)
             else:
@@ -271,5 +269,5 @@ if __name__ == "__main__":
     lexer = Lexer()
     lexer.analysis(f)
     f.close()
-    lexer.listing(only_errors=False)
+    lexer.listing()
     input()

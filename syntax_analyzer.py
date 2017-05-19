@@ -417,7 +417,7 @@ class Parser:
         list of tokens.
         """
         if full:
-            self.lex.listing(only_errors=False, output=output)
+            self.lex.listing(output=output)
         for x in self.error_list:
             if x[0] == 0:
                 print("\"PROCEDURE\" keyword expected (line %i, position %i)" %
