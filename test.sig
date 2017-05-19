@@ -1,12 +1,7 @@
-procedure test (a, c10, onemore);
-label 1, 65, 115, 22 ;
-
+procedure test (a, b, onemore);
+label 1, 2, 3, 4, 5;
 begin
-	16: 32: 64: goto 8;
-	(** comment *******)
-	8: ;
-	($ popobawa $)
-	(*****************)
-	(**)
+	1: 2: 3: goto 4;
 	return;
-end ;
+	4: ($ insert $);
+end;

@@ -1,4 +1,4 @@
-import lexer
+import lexical_analyzer
 
 
 class Parser:
@@ -42,7 +42,7 @@ class Parser:
     max_ct = 0
 
     def __init__(self):
-        self.lex = lexer.Lexer()
+        self.lex = lexical_analyzer.Lexer()
 
     def parser(self, file):
         """
@@ -202,7 +202,7 @@ class Parser:
         res = self.parse_statement()
         if self.ct > self.max_ct:
             return self.process_error(3)
-        res.append(self.parse_stmt_list())
+        res.extend(self.parse_stmt_list())
         return ["<STATEMENTS-LIST>", res]
 
     def parse_statement(self):
@@ -283,7 +283,7 @@ class Parser:
                 return self.process_error(9)
             res.append(58)
             self.ct += 1
-            res.append(self.parse_statement())
+            res.extend(self.parse_statement())
         return ["<STATEMENT>", res]
 
     def parse_condition(self):
