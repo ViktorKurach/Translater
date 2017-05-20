@@ -5,15 +5,15 @@ assume cs:code
 push ebp
 @501:
 @502:
+@503:
+jmp @504
+pop ebp
+ret
 @504:
-jmp @505
-@505:
 xor ax, ax
 mov cx, 6
 add ax, cx
 nop
-pop ebp
-ret
 pop ebp
 ret
 @1001 endp

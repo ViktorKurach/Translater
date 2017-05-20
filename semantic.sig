@@ -1,8 +1,7 @@
-procedure test (a, c10, onemore);
-label 1, 65, 115, 22, 8;
+procedure test (a, b, onemore);
+label 1, 2, 3, 4, 5;
 begin
-	1: 65: 22: goto 8;
-	8: ;
-	($ insert $);
-	return; ; ;
+	1: 2: 3: goto 4;
+	return;
+	4: ($ insert $);
 end;

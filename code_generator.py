@@ -183,6 +183,7 @@ class CodeGenerator:
         if tree[0] == "<EMPTY>":
             return 0
         self.code_gen_variable_id(tree[2])
+        self.parameters.append(self.var_id)
         print("push ax", file=self.code_file)
         return self.code_gen_id_list(tree[4])
 
@@ -200,6 +201,7 @@ class CodeGenerator:
             return 0
         if self.code_gen_variable_id(tree[2]) != 0:
             return 1
+        self.parameters.append(self.var_id)
         print("push ax", file=self.code_file)
         return self.code_gen_id_list(tree[4])
 
@@ -316,8 +318,6 @@ class CodeGenerator:
         or #21 (see self.process_error description).
         """
         self.id = str(tree[0])
-        if self.id in self.keywords_table.keys():
-            return self.process_error(22)
         if self.id in self.parameters:
             return self.process_error(18)
         if self.id in self.identifiers:
@@ -496,7 +496,7 @@ class CodeGenerator:
                 print("Reference to non-existing label %s in GOTO statement" %
                       error_case[1], file=output)
             elif error_case[0] == 20:
-                print("File not found: %s.asm" % error_case[1], file=output)
+                print("File not found: %s.ASM" % error_case[1], file=output)
             elif error_case[0] == 21:
                 print("Re-used identifier: %s" % error_case[1], file=output)
             elif error_case[0] == 22:
