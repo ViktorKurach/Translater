@@ -1,0 +1,15 @@
+1.	| PROCEDURE TEST (A, C10, ONEMORE);
+2.	| LABEL 1, 65, 115A22;
+3.	| сь
+4.	| BEGIN
+5.	|  16:32:  64 : GOTO 8;
+6.	|  $
+7.	|  8: ;
+8.	|  ($ POPOBAWA $)
+9.	|  RETURN $ *);
+10.	|  ш
+11.	| END;
+12.	| 
+
+Error occurred:
+Unresolved character (line 3, position 1)

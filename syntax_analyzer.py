@@ -7,7 +7,7 @@ class Parser:
 
     Class contents lists:
     1. token_list - list of tokens. Initially is empty; is filled during
-    lexical analysis (see lexer.token_list description).
+    lexical analysis (see lexical_analyzer.token_list description).
     2. syntax_tree list. Initially is empty. If any lexical or syntax error
     occurs, remains empty. If analysis finishes successfully, is filled with
     elements of three types:
@@ -25,6 +25,9 @@ class Parser:
     Class contents integer variables:
     1. ct (Current Token) - used for iteration through self.token_list.
     2. max_ct = len(self.token_list) - 1
+
+    Class contents objects:
+    1. lex - an instance of class Lexer. Is being created by constructor.
 
     Class contents methods:
     1. __init__(self)

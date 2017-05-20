@@ -1,0 +1,11 @@
+1.	| PROCEDURE TEST (A, C10, ONEMORE);
+2.	| LABEL 1, 65, 115, 22;
+3.	| BEGIN
+4.	|  16: 32: 64: GOTO 8;
+5.	|  8: ;
+6.	|  ($ FILE $);
+7.	|  RETURN; ; ;
+8.	| END;
+
+Error occurred:
+Reference to undeclared label 16
