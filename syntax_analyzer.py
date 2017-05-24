@@ -503,3 +503,4 @@ if __name__ == "__main__":
     if parser.syntax_tree:
         print("Syntax tree:")
     parser.pretty_print(parser.syntax_tree)
+    input()

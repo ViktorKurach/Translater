@@ -21,5 +21,7 @@ try:
     code_gen.listing(h)
     h.close()
     print("Listing is written to %s.lst" % filename)
+    input()
 except FileNotFoundError:
     print("No such file found")
+    input()

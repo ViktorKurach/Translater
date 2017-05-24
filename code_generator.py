@@ -519,3 +519,4 @@ if __name__ == "__main__":
     h = open(filename+".lst", "w")
     code_gen.listing(h)
     h.close()
+    input()
