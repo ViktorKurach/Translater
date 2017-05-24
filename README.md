@@ -4,7 +4,7 @@ Labworks for 'Theory Of Translaters' discipline
 Instruments:
  - JetBrains PyCharm Community Edition 2016.2.3
 
-A program that parses and translates to Assembler's code a subset of SIGNAL(c) programming language:
+The program parses and translates to Assembler's code a subset of SIGNAL(c) programming language:
 1. \<signal-program\> --> \<program\>
 2. \<program\> --> PROCEDURE \<procedure-identifier\>\<parameters-list\>; \<block\>;
 3. \<block\> --> \<declarations\> BEGIN \<statements-list\> END
